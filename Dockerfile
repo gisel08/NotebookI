@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Instala extensiones necesarias
+# Instalación de dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libpng-dev libonig-dev libxml2-dev libzip-dev \
     && docker-php-ext-install pdo_mysql mbstring zip exif pcntl
@@ -8,17 +8,19 @@ RUN apt-get update && apt-get install -y \
 # Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Crea el directorio de la app
+# Establece el directorio de trabajo
 WORKDIR /var/www
 
-# Copia el proyecto
+# Copia el código
 COPY . .
 
-# Instala dependencias
-RUN composer install
+# Instala dependencias de Laravel
+RUN composer install --optimize-autoloader --no-dev
 
-# Da permisos
-RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
+# Asigna permisos
+RUN chmod -R 755 /var/www && chown -R www-data:www-data /var/www
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Expone el puerto del servidor PHP
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
