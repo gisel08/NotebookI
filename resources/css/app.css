@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'trix/dist/trix.css';
+
+
+[x-cloak] {
+    display: none;
+}
