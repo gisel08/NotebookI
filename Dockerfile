@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     nodejs \
-    npm # <--- ¡Aquí estaba el problema! Ahora está correctamente al final de la lista de 'apt-get install'
+    npm \
+    && rm -rf /var/lib/apt/lists/* # Limpiar caché de apt
 
 # Instalación de extensiones PHP
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
@@ -29,12 +30,13 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev
 
 # Instala dependencias de Node.js (npm) y compila el frontend (Vite)
-RUN npm install && npm run build # <--- Esto es CRUCIAL para Vite
+RUN npm install && npm run build
 
-# Asigna permisos
-RUN chmod -R 755 /var/www && chown -R www-data:www-data /var/www
+# Asigna permisos (importante para PHP-FPM)
+RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
-# Expone el puerto del servidor PHP
-EXPOSE 8000
+# Expone el puerto del servidor PHP-FPM (puerto estándar)
+EXPOSE 9000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Comando para iniciar PHP-FPM
+CMD ["php-fpm"]

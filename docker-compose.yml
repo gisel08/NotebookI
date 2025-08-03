@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+    container_name: laravel_app
+    # Laravel usará el puerto 8000 internamente por el CMD en Dockerfile
+    # No necesitamos mapear puertos aquí si NGINX lo va a usar internamente
+    volumes:
+      - .:/var/www
+    networks:
+      - laravel
+
+  webserver:
+    image: nginx:alpine
+    container_name: nginx_web
+    ports:
+      - "80:80" # <--- Render mapea el puerto 80 al exterior
+    volumes:
+      - .:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf # <--- Monta tu nginx.conf
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  # db: # <--- Si usas Railway, no necesitas un servicio de DB aquí
+  #   image: mysql:8.0
+  #   container_name: mysql_db
+  #   environment:
+  #     MYSQL_DATABASE: laravel
+  #     MYSQL_ROOT_PASSWORD: root
+  #     MYSQL_PASSWORD: root
+  #     MYSQL_USER: laravel
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - dbdata:/var/lib/mysql
+  #   networks:
+  #     - laravel
+
+networks:
+  laravel:
+# volumes: # <--- Si no usas DB local en Docker Compose
+#   dbdata:
