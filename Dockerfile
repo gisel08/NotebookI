@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Instalación de dependencias del sistema y Node.js
+# Install system dependencies and Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -12,31 +12,31 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     nodejs \
     npm \
-    && rm -rf /var/lib/apt/lists/* # Limpiar caché de apt
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalación de extensiones PHP
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
 
-# Instala Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Establece el directorio de trabajo
+# Set working directory
 WORKDIR /var/www
 
-# Copia el código
+# Copy the code
 COPY . .
 
-# Instala dependencias de Laravel (Composer)
+# Install Laravel dependencies (Composer)
 RUN composer install --optimize-autoloader --no-dev
 
-# Instala dependencias de Node.js (npm) y compila el frontend (Vite)
+# Install Node.js dependencies (npm) and build the frontend (Vite)
 RUN npm install && npm run build
 
-# Asigna permisos (importante para PHP-FPM)
+# Assign permissions
 RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
-# Expone el puerto del servidor PHP-FPM (puerto estándar)
+# Expose PHP-FPM port (for NGINX in docker-compose)
 EXPOSE 9000
 
-# Comando para iniciar PHP-FPM
+# Command to start PHP-FPM
 CMD ["php-fpm"]
