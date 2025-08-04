@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Install system dependencies and Node.js
+# Instalación de dependencias del sistema y Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -12,31 +12,31 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     nodejs \
     npm \
-    && rm -rf /var/lib/apt/lists/*
+    # Instalar yarn si lo usas en vez de npm (npm es lo más común)
+    # yarn \
+    && rm -rf /var/lib/apt/lists/* # Limpiar caché de apt
 
-# Install PHP extensions
+# Instalación de extensiones PHP
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
 
-# Install Composer
+# Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
+# Establece el directorio de trabajo
 WORKDIR /var/www
 
-# Copy the code
+# Copia el código
 COPY . .
 
-# Install Laravel dependencies (Composer)
+# Instala dependencias de Laravel (Composer)
 RUN composer install --optimize-autoloader --no-dev
 
-# Install Node.js dependencies (npm) and build the frontend (Vite)
+# Instala dependencias de Node.js (npm) y compila el frontend (Vite)
 RUN npm install && npm run build
 
-# Assign permissions
-RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
+# Asigna permisos (importante para que el servidor web pueda leer los archivos)
+RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www/storage /var/www/bootstrap/cache
 
-# Expose PHP-FPM port (for NGINX in docker-compose)
-EXPOSE 9000
-
-# Command to start PHP-FPM
-CMD ["php-fpm"]
+# Comando de inicio: Usa la variable de entorno $PORT que Render proporciona
+# Laravel escuchará en 0.0.0.0 y el puerto que Render le asigne
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=${PORT}"]
